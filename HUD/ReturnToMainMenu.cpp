@@ -13,6 +13,7 @@ void UReturnToMainMenu::MenuSetup()
     AddToViewport();
 	SetVisibility(ESlateVisibility::Visible);
 	bIsFocusable = true;
+
 	UWorld* World = GetWorld();
 	if (World)
 	{
@@ -25,7 +26,7 @@ void UReturnToMainMenu::MenuSetup()
 			PlayerController->SetShowMouseCursor(true);
 		}
 	}
-    if (ReturnButton && !ReturnButton->OnClicked.IsBound())
+	if (ReturnButton)
 	{
 		ReturnButton->OnClicked.AddDynamic(this, &UReturnToMainMenu::ReturnButtonClicked);
 	}
@@ -33,7 +34,7 @@ void UReturnToMainMenu::MenuSetup()
 	if (GameInstance)
 	{
 		MultiplayerSessionsSubsystem = GameInstance->GetSubsystem<UMultiplayerSessionsSubsystem>();
-		if (MultiplayerSessionsSubsystem)
+		if (MultiplayerSessionsSubsystem && !MultiplayerSessionsSubsystem->MultiplayerOnDestroySessionComplete.IsBound())
 		{
 			MultiplayerSessionsSubsystem->MultiplayerOnDestroySessionComplete.AddDynamic(this, &UReturnToMainMenu::OnDestroySession);
 		}
