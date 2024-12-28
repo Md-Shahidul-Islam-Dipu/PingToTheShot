@@ -7,7 +7,7 @@
 #include "ReturnToMainMenu.generated.h"
 
 /**
- * 
+ *
  */
 UCLASS()
 class PINGTOTHESHOT_API UReturnToMainMenu : public UUserWidget
@@ -15,14 +15,17 @@ class PINGTOTHESHOT_API UReturnToMainMenu : public UUserWidget
 	GENERATED_BODY()
 public:
 	void MenuSetup();
-	void MenuTearDown(); 
+	void MenuTearDown();
 
 protected:
 	virtual bool Initialize() override;
+
 	UFUNCTION()
 	void OnDestroySession(bool bWasSuccessful);
+
 	UFUNCTION()
 	void OnPlayerLeftGame();
+
 private:
 	UPROPERTY(meta = (BindWidget))
 	class UButton* ReturnButton;
@@ -31,8 +34,8 @@ private:
 	void ReturnButtonClicked();
 
 	UPROPERTY()
-	class APlayerController* PlayerController;
+	class UMultiplayerSessionsSubsystem* MultiplayerSessionsSubsystem;
 
 	UPROPERTY()
-	class UMultiplayerSessionsSubsystem* MultiplayerSessionsSubsystem;
+	class APlayerController* PlayerController;
 };

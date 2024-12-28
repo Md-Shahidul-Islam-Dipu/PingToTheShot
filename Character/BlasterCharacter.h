@@ -39,6 +39,7 @@ public:
 	bool bDisableGameplay = false;
 	void UpdateHUDHealth();
 	void UpdateHUDAmmo();
+	
 	UFUNCTION(Server,Reliable)
 	void ServerLeaveGame();
 	FOnLeftGame OnLeftGame;
@@ -48,8 +49,12 @@ public:
 	UFUNCTION(NetMulticast,Reliable)
 	void MulticastLostTheLead();
 
+	UPROPERTY()
+	TMap<FName,class UBoxComponent*> HitCollisionBoxes;
+
 protected:
     virtual void BeginPlay() override;
+
     void MoveForward(float Value);
 	void MoveRight(float Value);
 	void Turn(float Value);
@@ -62,12 +67,76 @@ protected:
 	void FireButtonReleased();
 	void ReloadButtonPressed();
 	virtual void Jump() override;
+
     void AimOffset(float DeltaTime);
+
     void CalculatedAO_Pitch();
+
     void SimProxiesTurn();
 	void RotateInPlace(float DeltaTime);
+
+	/** 
+		Hit boxes used for server-side rewind and for headshots
+	*/
+
+	UPROPERTY(EditAnywhere)
+	UBoxComponent* head;
+
+	UPROPERTY(EditAnywhere)
+	UBoxComponent* pelvis;
+
+	UPROPERTY(EditAnywhere)
+	UBoxComponent* spine_02;
+
+	UPROPERTY(EditAnywhere)
+	UBoxComponent* spine_03;
+
+	UPROPERTY(EditAnywhere)
+	UBoxComponent* upperarm_l;
+
+	UPROPERTY(EditAnywhere)
+	UBoxComponent* upperarm_r;
+
+	UPROPERTY(EditAnywhere)
+	UBoxComponent* lowerarm_l;
+
+	UPROPERTY(EditAnywhere)
+	UBoxComponent* lowerarm_r;
+
+	UPROPERTY(EditAnywhere)
+	UBoxComponent* hand_l;
+
+	UPROPERTY(EditAnywhere)
+	UBoxComponent* hand_r;
+
+	UPROPERTY(EditAnywhere)
+	UBoxComponent* backpack;
+
+	UPROPERTY(EditAnywhere)
+	UBoxComponent* blanket;
+
+	UPROPERTY(EditAnywhere)
+	UBoxComponent* thigh_l;
+
+	UPROPERTY(EditAnywhere)
+	UBoxComponent* thigh_r;
+
+	UPROPERTY(EditAnywhere)
+	UBoxComponent* calf_l;
+
+	UPROPERTY(EditAnywhere)
+	UBoxComponent* calf_r;
+
+	UPROPERTY(EditAnywhere)
+	UBoxComponent* foot_l;
+
+	UPROPERTY(EditAnywhere)
+	UBoxComponent* foot_r;
+
+
 	UFUNCTION()
 	void ReceiveDamage(AActor* DamagedActor, float Damage, const UDamageType* DamageType, class AController* InstigatorController, AActor* DamageCauser);
+
 	//polling for relevent classes and initializing HUD in the first frame
 	void PollInit();
 	void SpawnDefaultWeapon();
@@ -87,6 +156,9 @@ private:
 	class UCombatComponent* CombatComponent;
 	UPROPERTY(VisibleAnywhere)
 	class UBuffComponent* BuffComponent;
+	UPROPERTY(VisibleAnywhere)
+	class ULagCompensationComponent* LagCompensationComponent;
+
 	UFUNCTION(Server,Reliable)
 	void ServerEquipButtonPressed();
 
@@ -184,6 +256,7 @@ public:
 	ECombatState GetCombatState() const;
 	FORCEINLINE UCombatComponent* GetCombat() const {return CombatComponent;}
 	FORCEINLINE UBuffComponent* GetBuff() const {return BuffComponent;}
+	FORCEINLINE ULagCompensationComponent* GetLagCompensation() const{return LagCompensationComponent;}
 	FORCEINLINE bool GetDisableGameplay() const {return bDisableGameplay;}
 	bool IsLocallyReloading();
 };
