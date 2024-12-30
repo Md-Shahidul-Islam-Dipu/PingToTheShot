@@ -107,6 +107,11 @@ void AWeapon::OnWeaponStateSet()
 	}
 }
 
+void AWeapon::OnPingTooHigh(bool bPingTooHigh)
+{
+	bUseServerSideRewind = !bPingTooHigh;
+}
+
 void AWeapon::OnRep_WeaponState()
 {
 	OnWeaponStateSet();
@@ -127,6 +132,15 @@ void AWeapon::OnDropped()
     WeaponMesh->SetCustomDepthStencilValue(CustomDepth_Blue);
     WeaponMesh->MarkRenderStateDirty();
     EnableCustomDepth(true);
+	BlasterOwnerCharacter = BlasterOwnerCharacter == nullptr ? Cast<ABlasterCharacter>(GetOwner()) : BlasterOwnerCharacter;
+    if (BlasterOwnerCharacter && bUseServerSideRewind)
+    {
+        BlasterOwnerController = BlasterOwnerController == nullptr ? Cast<ABlasterPlayerController>(BlasterOwnerCharacter->Controller) : BlasterOwnerController;
+        if (BlasterOwnerController && BlasterOwnerController->HighPingDelegate.IsBound())
+        {
+			BlasterOwnerController->HighPingDelegate.RemoveDynamic(this, &AWeapon::OnPingTooHigh);
+        }
+    }
 }
 
 void AWeapon::OnEquipped()
@@ -137,6 +151,15 @@ void AWeapon::OnEquipped()
     WeaponMesh->SetEnableGravity(false);
     WeaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	EnableCustomDepth(false);
+	BlasterOwnerCharacter = BlasterOwnerCharacter == nullptr ? Cast<ABlasterCharacter>(GetOwner()) : BlasterOwnerCharacter;
+    if (BlasterOwnerCharacter && bUseServerSideRewind)
+    {
+        BlasterOwnerController = BlasterOwnerController == nullptr ? Cast<ABlasterPlayerController>(BlasterOwnerCharacter->Controller) : BlasterOwnerController;
+        if (BlasterOwnerController && !BlasterOwnerController->HighPingDelegate.IsBound())
+        {
+			BlasterOwnerController->HighPingDelegate.AddDynamic(this, &AWeapon::OnPingTooHigh);
+        }
+    }
 }
 
 void AWeapon::OnEquippedSecondary()
@@ -153,6 +176,15 @@ void AWeapon::OnEquippedSecondary()
 		WeaponMesh->SetCustomDepthStencilValue(CustomDepth_Tan);
 		WeaponMesh->MarkRenderStateDirty();
 	}
+	BlasterOwnerCharacter = BlasterOwnerCharacter == nullptr ? Cast<ABlasterCharacter>(GetOwner()) : BlasterOwnerCharacter;
+    if (BlasterOwnerCharacter && bUseServerSideRewind)
+    {
+        BlasterOwnerController = BlasterOwnerController == nullptr ? Cast<ABlasterPlayerController>(BlasterOwnerCharacter->Controller) : BlasterOwnerController;
+        if (BlasterOwnerController && BlasterOwnerController->HighPingDelegate.IsBound())
+        {
+			BlasterOwnerController->HighPingDelegate.RemoveDynamic(this, &AWeapon::OnPingTooHigh);
+        }
+    }
 }
 
 void AWeapon::Fire(const FVector& HitTarget)
@@ -240,6 +272,7 @@ void AWeapon::GetLifetimeReplicatedProps(TArray<FLifetimeProperty> &OutLifetimeP
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(AWeapon,WeaponState);
+	DOREPLIFETIME_CONDITION(AWeapon,bUseServerSideRewind,COND_OwnerOnly);
 }
 
 void AWeapon::OnRep_Owner()
@@ -252,8 +285,7 @@ void AWeapon::OnRep_Owner()
 	}
 	else
 	{	
-		BlasterOwnerCharacter = BlasterOwnerCharacter == nullptr ?
-			Cast<ABlasterCharacter>(Owner) : BlasterOwnerCharacter;
+		BlasterOwnerCharacter = BlasterOwnerCharacter == nullptr ?Cast<ABlasterCharacter>(Owner) : BlasterOwnerCharacter;
 		if (BlasterOwnerCharacter && BlasterOwnerCharacter->GetEquippedWeapon() && BlasterOwnerCharacter->GetEquippedWeapon() == this)
 		{
 			SetHUDAmmo();

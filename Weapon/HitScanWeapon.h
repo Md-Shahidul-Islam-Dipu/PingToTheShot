@@ -18,8 +18,6 @@ public:
 	virtual void Fire(const FVector& HitTarget);
 private:
 	UPROPERTY(EditAnywhere)
-	float Damage = 15.f;
-	UPROPERTY(EditAnywhere)
 	class UParticleSystem* ImpactParticles;
 	UPROPERTY(EditAnywhere) 
 	UParticleSystem* BeamParticles;

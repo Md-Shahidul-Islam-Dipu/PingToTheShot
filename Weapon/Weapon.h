@@ -61,6 +61,21 @@ protected:
     virtual void OnEquipped();
 	virtual void OnEquippedSecondary();
 
+	UPROPERTY(EditAnywhere)
+	float Damage = 20.f;
+
+	UPROPERTY(EditAnywhere)
+	float HeadShotDamage = 40.f;
+	UPROPERTY(Replicated,EditAnywhere)
+	bool bUseServerSideRewind = false;
+
+	UPROPERTY()
+	class ABlasterCharacter* BlasterOwnerCharacter;
+	UPROPERTY()
+	class ABlasterPlayerController* BlasterOwnerController;
+
+	UFUNCTION()
+	void OnPingTooHigh(bool bPingTooHigh);
 private:
 	UPROPERTY(VisibleAnywhere,Category = "Weapon Properties")
 	USkeletalMeshComponent*  WeaponMesh;
@@ -101,11 +116,6 @@ private:
 	int32 MagCapacity;
 	void SpendRound();
 
-	UPROPERTY()
-	class ABlasterCharacter* BlasterOwnerCharacter;
-	UPROPERTY()
-	class ABlasterPlayerController* BlasterOwnerController;
-
 	UPROPERTY(EditAnywhere)
 	EWeaponType WeaponType;
 public:	
@@ -118,7 +128,9 @@ public:
 	FORCEINLINE EWeaponType GetWeaponType() const {return WeaponType;}
 	FORCEINLINE int32 GetAmmo() const { return Ammo; }
 	FORCEINLINE int32 GetMagCapacity() const { return MagCapacity; }
-
+	FORCEINLINE float GetDamage() const { return Damage; }
+	FORCEINLINE float GetHeadShotDamage() const { return HeadShotDamage; }
+	
 	virtual void Fire(const FVector& HitTarget);
 	
 	UPROPERTY(EditAnywhere,Category = Crosshair)

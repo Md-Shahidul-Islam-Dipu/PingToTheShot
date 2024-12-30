@@ -6,6 +6,8 @@
 #include "PingToTheShot/Character/BlasterCharacter.h"
 #include "Kismet/GameplayStatics.h"
 #include "Particles/ParticleSystemComponent.h"
+#include "PingToTheShot/BlasterComponents/LagCompensationComponent.h"
+#include "PingToTheShot/PlayerController/BlasterPlayerController.h"
 
 void AHitScanWeapon::Fire(const FVector &HitTarget)
 {
@@ -36,16 +38,49 @@ void AHitScanWeapon::Fire(const FVector &HitTarget)
             {
                 BeamEnd = FireHit.ImpactPoint;
                 ABlasterCharacter* BlasterCharacter = Cast<ABlasterCharacter>(FireHit.GetActor());
-                if(BlasterCharacter && HasAuthority() && InstigatorController)
+                if(BlasterCharacter && InstigatorController)
                 {
-                    UGameplayStatics::ApplyDamage(
-                        BlasterCharacter,
-                        Damage,
-                        InstigatorController,
-                        this,
-                        UDamageType::StaticClass()
-                    );
-                    
+                    // bool bCauseAuthDamage = OwnerPawn->HasAuthority() && !bUseServerSideRewind;
+                    // if(HasAuthority() && bCauseAuthDamage)
+                    // {
+                    //     const float DamageToCause = FireHit.BoneName.ToString() == FString("head") ? HeadShotDamage : Damage;
+                    //     UGameplayStatics::ApplyDamage(
+                    //         BlasterCharacter,
+                    //         DamageToCause,
+                    //         InstigatorController,
+                    //         this,
+                    //         UDamageType::StaticClass()
+                    //     );
+                    // }
+                    if(HasAuthority())
+                    {
+                        bool bCauseAuthDamage = !bUseServerSideRewind || OwnerPawn->IsLocallyControlled();
+                        if(bCauseAuthDamage)
+                        {
+                            const float DamageToCause = FireHit.BoneName.ToString() == FString("head") ? HeadShotDamage : Damage;
+                            UGameplayStatics::ApplyDamage(
+                                BlasterCharacter,
+                                DamageToCause,
+                                InstigatorController,
+                                this,
+                                UDamageType::StaticClass()
+                            );
+                        }
+                    }
+                    if (!HasAuthority() && bUseServerSideRewind)
+                    {
+                        BlasterOwnerCharacter = BlasterOwnerCharacter == nullptr ? Cast<ABlasterCharacter>(OwnerPawn) : BlasterOwnerCharacter;
+				        BlasterOwnerController = BlasterOwnerController == nullptr ? Cast<ABlasterPlayerController>(InstigatorController) : BlasterOwnerController;
+                        if (BlasterOwnerController && BlasterOwnerCharacter && BlasterOwnerCharacter->GetLagCompensation())
+				        {
+					        BlasterOwnerCharacter->GetLagCompensation()->ServerScoreRequest(
+						        BlasterCharacter,
+						        Start,
+						        HitTarget,
+						        BlasterOwnerController->GetServerTime() - BlasterOwnerController->SingleTripTime
+					        );
+				        }
+                    }  
                 }
                 if(ImpactParticles)
                 {
@@ -56,6 +91,10 @@ void AHitScanWeapon::Fire(const FVector &HitTarget)
                         FireHit.ImpactNormal.Rotation()
                     );
                 }
+            }
+            else
+            {
+                FireHit.ImpactPoint = End;
             }
             if(BeamParticles)
             {

@@ -187,6 +187,11 @@ void ABlasterPlayerController::SetHUDTime()
 
     if(HasAuthority())
     {
+		if (BlasterGameMode == nullptr)
+		{
+			BlasterGameMode = Cast<ABlasterGameMode>(UGameplayStatics::GetGameMode(this));
+			LevelStartingTime = BlasterGameMode->LevelStartingTime;
+		}
         BlasterGameMode = BlasterGameMode == nullptr ? Cast<ABlasterGameMode>(UGameplayStatics::GetGameMode(this)) : BlasterGameMode;
         if(BlasterGameMode)
         {
@@ -235,7 +240,8 @@ void ABlasterPlayerController::ServerRequestServerTime_Implementation(float Time
 void ABlasterPlayerController::ClientReportServerTime_Implementation(float TimeOfClientRequest, float TimeServerReceivedClientRequest)
 {
     float RoundTripTime = GetWorld()->GetTimeSeconds() - TimeOfClientRequest;
-    float CurrentServerTime = TimeServerReceivedClientRequest + (0.5f * RoundTripTime);
+   	SingleTripTime = 0.5f * RoundTripTime;
+	float CurrentServerTime = TimeServerReceivedClientRequest + SingleTripTime;
     ClientServerDelta = CurrentServerTime - GetWorld()->GetTimeSeconds();
 }
 
@@ -282,6 +288,10 @@ void ABlasterPlayerController::OnRep_MatchState()
 	{
 		HandleCooldown();
 	}
+}
+void ABlasterPlayerController::ServerReportPingStatus_Implementation(bool bHighPing)
+{
+	HighPingDelegate.Broadcast(bHighPing);
 }
 void ABlasterPlayerController::HandleMatchHasStarted()
 {
@@ -423,7 +433,12 @@ void ABlasterPlayerController::CheckPing(float DeltaTime)
             {
                 HighPingWarning();
                 PingAnimationRunningTime = 0.f;
+				ServerReportPingStatus(true); 
             }
+			else
+			{
+				ServerReportPingStatus(false);
+			}
 		}
 		HighPingRunningTime = 0.f;
 	}
